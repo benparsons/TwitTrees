@@ -161,20 +161,20 @@
         $("#username").bind('keyup', function(e) {
             var code = (e.keyCode ? e.keyCode : e.which);
             if(code == 13) { //Enter keycode
-                alert($("#username").val());
                 $.getJSON('/nr?username=' + $("#username").val(), function(data) {
-          $('#content').html(data.friends.toString());
-          //alert('Load was performed.');
-          i = 0
-          $.each(data.friends, function() {
-                             sys.addNode('a', {label: 'middle'})
-
-               sys.addNode(this.toString(), {label: this.toString()})
-                   sys.addEdge('a',this.toString())
-              
-              //alert(this);
-          });
-        });            }
+                  $('#content').html(data.friends.toString());
+                  //alert('Load was performed.');
+                  $.each(data.friends, function() {
+                                     sys.addNode('a', {label: 'middle'})
+        
+                       sys.addNode(this.toString(), {label: this.toString()})
+                           sys.addEdge('a',this.toString())
+                      
+                      //alert(this);
+                  });
+                  $("#intro").html("Showing basic twitter friends graph for user " + $("#username").val());
+                });
+            }
         });
     
     
