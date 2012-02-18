@@ -155,7 +155,7 @@
     var sys = arbor.ParticleSystem(500, 100, 0.8) // create the system with sensible repulsion/stiffness/friction
     sys.parameters({gravity: true}) // use center-gravity to make the graph settle nicely (ymmv)
     sys.renderer = Renderer("#viewport") // our newly created renderer will have its .init() method called shortly by sys...
-
+    var nodeslist = new Array()
     // add some nodes to the graph and watch it go...
 
         $("#username").bind('keyup', function(e) {
@@ -163,13 +163,13 @@
             if(code == 13) { //Enter keycode
                 $.getJSON('/nr?username=' + $("#username").val(), function(data) {
                   $('#content').html(data.friends.toString());
-                  //alert('Load was performed.');
+                  alert('Load was performed.');
                   $.each(data.friends, function() {
                                      sys.addNode('a', {label: 'middle'})
         
                        sys.addNode(this.toString(), {label: this.toString()})
                            sys.addEdge('a',this.toString())
-                      
+                      nodeslist.push(this.toString())
                       //alert(this);
                   });
                   $("#intro").html("Showing basic twitter friends graph for user " + $("#username").val());
@@ -177,7 +177,7 @@
             }
         });
     
-    
+        
     
     // or, equivalently:
     //
