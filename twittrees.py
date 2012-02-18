@@ -67,7 +67,7 @@ class Nain(webapp.RequestHandler):
 
 class GetUserTask(webapp.RequestHandler):
     def get(self):
-        api = twitter.Api(consumer_key='vJfpUnZtusTG8hcNWE0yQ', consumer_secret='oB21rUYaxvY5ltYXsGH80b9rRNkopMJFfBre0k5yXo', access_token_key='8229292-GFJiRDAVqI0skPtrqz1lRJQHdx6tOBTLsYx1f1dwbQ', access_token_secret='95XSs3FsNLtV8FFIDz3iwVxPffKpx6aDp2vskWLqY',cache=None)
+        
         firstid = str(self.request.get('id'))
         ll = []
         ll.append(firstid)
