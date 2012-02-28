@@ -25,18 +25,15 @@ class Nain(webapp.RequestHandler):
         logging.info("test")
         self.response.headers['Content-Type'] = 'text/plain'
         
-        startpoint = TwitterUser(key_name = self.request.get('username'),screen_name = self.request.get('username'))
-        firstid = str(self.request.get('username'))
-        
+        startpoint = TwitterUser.get_or_insert(key_name = self.request.get('username'),screen_name = self.request.get('username'))
         ll = []
-        
-        query = db.Query(TwitterUser)
-        query.filter("screen_name", firstid)
-        res = query.get()
-        if res is None:
-            ll.append(firstid)
+        if not startpoint.name:
+            ll.append(str(startpoint.screen_name))
+            logging.info(ll)
             details = api.UsersLookup(screen_name=ll)
-            startpoint = TwitterUser(key_name=details[0].screen_name, twitter_id = details[0].id, name = details[0].name, details_updated = datetime.datetime.now(), screen_name = details[0].screen_name)
+            startpoint.twitter_id = details[0].id
+            startpoint.name = details[0].name
+            startpoint.details_updated = datetime.datetime.now()
             startpoint.put()
             logging.info("condition 1")
         
@@ -45,18 +42,16 @@ class Nain(webapp.RequestHandler):
         
         ll = api.GetFriendIDs(user=self.request.get('username'))
         details = api.UsersLookup(user_id=ll['ids'][:100])
+        output.twitter_id = startpoint.twitter_id
         output.friends = ll['ids']
         for u in details:
-            query = db.Query(TwitterUser)
-            query.filter("twitter_id", u.id)
-            res = query.get()
-            if res is None:
-                userobj = TwitterUser(key_name = u.screen_name,twitter_id = u.id, name = u.name, screen_name = u.screen_name, details_updated = datetime.datetime.now())
-                userobj.put()
-                startpoint.friends.append(userobj.key())
-                taskqueue.add(url='/getUser', params={'id': u.id}, method='GET')
-                startpoint.friends_updated = datetime.datetime.now()
-                startpoint.put()
+            userobj = TwitterUser.get_or_insert(key_name = u.screen_name,twitter_id = u.id, name = u.name, screen_name = u.screen_name, details_updated = datetime.datetime.now())
+            userobj.put()
+            startpoint.friends.append(userobj.key())
+            #taskqueue.add(url='/getUser', params={'username': u.screen_name}, method='GET')
+            startpoint.friends_updated = datetime.datetime.now()
+        
+        startpoint.put()
         
         
             
@@ -67,23 +62,22 @@ class Nain(webapp.RequestHandler):
 
 class GetUserTask(webapp.RequestHandler):
     def get(self):
+<<<<<<< HEAD
         
         firstid = str(self.request.get('id'))
+=======
+        firstid = str(self.request.get('username'))
+>>>>>>> Progress
         ll = []
         ll.append(firstid)
-        query = db.Query(TwitterUser)
-        query.filter("twitter_id", firstid)
-        res = query.get()
-        userobj = TwitterUser()
-        self.response.out.write(res)
+        userobj = TwitterUser.get_or_insert(key_name = self.request.get('username'))
         
-        if res is None:
-            details = api.UsersLookup(user_id=ll)
-            userobj = TwitterUser(key_name = details[0].screen_name,twitter_id = details[0].id, name = details[0].name, screen_name = details[0].screen_name, details_updated = datetime.datetime.now())
-            userobj.put()
-            
-        if res is not None:
-            userobj = res
+        details = api.UsersLookup(screen_name=ll)
+        userobj.twitter_id = details[0].id
+        userobj.name = details[0].name
+        userobj.screen_name = self.request.get('username')
+        userobj.details_updated = datetime.datetime.now()
+        userobj.put()
             
         friendslist = api.GetFriendIDs(user=userobj.screen_name)
         followerslist = api.GetFollowerIDs(userid=userobj.twitter_id)
@@ -94,27 +88,24 @@ class GetUserTask(webapp.RequestHandler):
         
                 
         for u in friendsdetails:
-            query = db.Query(TwitterUser)
-            query.filter("screen_name", u.screen_name)
-            res = query.get()
-            if res is None:
-                v = TwitterUser(key_name = u.screen_name,twitter_id = u.id, name = u.name + " line 102", screen_name = u.screen_name, details_updated = datetime.datetime.now())
-                v.put()
-            else:
-                v = res
+            v = TwitterUser.get_or_insert(u.screen_name)
+            v.twitter_id = u.id
+            v.name = u.name
+            v.screen_name = u.screen_name
+            v.details_updated = datetime.datetime.now()
+            v.put()
             userobj.friends.append(v.key())
-            #taskqueue.add(url='/getUser', params={'id': v.twitter_id}, method='GET')
+            #taskqueue.add(url='/getUser', params={'username': v.screen_name}, method='GET')
         
         for u in followersdetails:
-            query.filter("screen_name", u.screen_name)
-            res = query.get()
-            if res is None:
-                v = TwitterUser(key_name = u.screen_name,twitter_id = u.id, name = u.name + " line 113", screen_name = u.screen_name, details_updated = datetime.datetime.now())
-                v.put()
-            else:
-                v = res
+            v = TwitterUser.get_or_insert(u.screen_name)
+            v.twitter_id = u.id
+            v.name = u.name
+            v.screen_name = u.screen_name
+            v.details_updated = datetime.datetime.now()
+            v.put()
             userobj.followers.append(v.key())
-            #taskqueue.add(url='/getUser', params={'id': v.twitter_id}, method='GET')
+            #taskqueue.add(url='/getUser', params={'id': v.screen_name}, method='GET')
         
         userobj.put()
         
@@ -122,15 +113,29 @@ class GetConnections(webapp.RequestHandler):
     def get(self):
         output =  JsonResponse()
         query = db.Query(TwitterUser)
-        query.filter("twitter_id", self.request.get('id'))
+        query.filter("twitter_id", long(self.request.get('id')))
         res = query.get()
         if res is None:
-            self.response.out.write("here")
-            return
-        
-        self.response.out.write(res)
-        output.userID = self.request.get('id')
-        output.userDetails = res
+            output.response = "1"
+        else:
+            output.response = "0"
+            output.userID = self.request.get('id')
+            output.screen_name = res.screen_name
+            friends = []
+            for user in res.friends:
+                friendsquery = db.Query(TwitterUser)
+                friendsquery.filter("__key__", user)
+                friendres = friendsquery.get()
+                friends.append(friendres.twitter_id)
+            output.friends = friends
+            
+            followers = []
+            for user in res.followers:
+                followersquery = db.Query(TwitterUser)
+                followersquery.filter("__key__", user)
+                friendres = followersquery.get()
+                followers.append(friendres.twitter_id)
+            output.followers = followers
         self.response.out.write(simplejson.dumps(output.__dict__))
         
 class QuickBrowser(webapp.RequestHandler):

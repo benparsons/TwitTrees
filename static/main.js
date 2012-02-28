@@ -152,10 +152,10 @@
   }    
 
   $(document).ready(function(){
-    var sys = arbor.ParticleSystem(500, 100, 0.8) // create the system with sensible repulsion/stiffness/friction
+    sys = arbor.ParticleSystem(500, 100, 0.1) // create the system with sensible repulsion/stiffness/friction
     sys.parameters({gravity: true}) // use center-gravity to make the graph settle nicely (ymmv)
     sys.renderer = Renderer("#viewport") // our newly created renderer will have its .init() method called shortly by sys...
-    var nodeslist = new Array()
+    
     // add some nodes to the graph and watch it go...
 
         $("#username").bind('keyup', function(e) {
@@ -165,10 +165,10 @@
                   $('#content').html(data.friends.toString());
                   alert('Load was performed.');
                   $.each(data.friends, function() {
-                                     sys.addNode('a', {label: 'middle'})
+                                     sys.addNode(data.twitter_id, {label: $("#username").val()})
         
                        sys.addNode(this.toString(), {label: this.toString()})
-                           sys.addEdge('a',this.toString())
+                           sys.addEdge('8229292',this.toString())
                       nodeslist.push(this.toString())
                       //alert(this);
                   });
@@ -176,8 +176,9 @@
                 });
             }
         });
-    
         
+        
+        setTimeout("getNext()", 200);
     
     // or, equivalently:
     //
@@ -197,3 +198,29 @@
   })
 
 })(this.jQuery)
+var sys;
+var nodeslist = new Array();
+
+        function getNext() {
+                if (nodeslist.length == 0)
+                {
+                    setTimeout("getNext()", 500);
+                    
+                }
+                else
+                {
+                    nextID = nodeslist.pop();
+                    
+                    $.getJSON('/getConnections?id=' + nextID, function(data) {
+                      if (nextID != '23909859')
+                      $.each(data.friends, function() {
+            
+                           sys.addNode(this.toString(), {label: this.toString()})
+                               sys.addEdge(nextID,this.toString())
+                          //nodeslist.push(this.toString())
+                      });
+                            setTimeout("getNext()", 200);
+                            console.log(nodeslist.length + " items: " + nodeslist);
+                    });
+                }
+        }
