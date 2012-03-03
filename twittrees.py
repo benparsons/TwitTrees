@@ -22,6 +22,8 @@ class Nain(webapp.RequestHandler):
     def get(self):
         #api = twitter.Api(cache=None)
         #authenticate with your own app data
+        
+
         logging.info("test")
         self.response.headers['Content-Type'] = 'text/plain'
         
@@ -62,12 +64,7 @@ class Nain(webapp.RequestHandler):
 
 class GetUserTask(webapp.RequestHandler):
     def get(self):
-<<<<<<< HEAD
-        
-        firstid = str(self.request.get('id'))
-=======
         firstid = str(self.request.get('username'))
->>>>>>> Progress
         ll = []
         ll.append(firstid)
         userobj = TwitterUser.get_or_insert(key_name = self.request.get('username'))

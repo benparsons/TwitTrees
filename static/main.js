@@ -163,22 +163,23 @@
             if(code == 13) { //Enter keycode
                 $.getJSON('/nr?username=' + $("#username").val(), function(data) {
                   $('#content').html(data.friends.toString());
-                  alert('Load was performed.');
+                  console.log('Load was performed.');
                   $.each(data.friends, function() {
                                      sys.addNode(data.twitter_id, {label: $("#username").val()})
         
                        sys.addNode(this.toString(), {label: this.toString()})
-                           sys.addEdge('8229292',this.toString())
+                           sys.addEdge(data.twitter_id,this.toString())
                       nodeslist.push(this.toString())
                       //alert(this);
                   });
                   $("#intro").html("Showing basic twitter friends graph for user " + $("#username").val());
+                  setTimeout("getNext()", 5000);
                 });
             }
+                  
         });
         
         
-        setTimeout("getNext()", 200);
     
     // or, equivalently:
     //
@@ -204,8 +205,14 @@ var nodeslist = new Array();
         function getNext() {
                 if (nodeslist.length == 0)
                 {
-                    setTimeout("getNext()", 500);
-                    
+                    //setTimeout("getNext()", 2000);
+                    sys.eachNode(function(node, pt) {
+                        if (sys.getEdgesFrom(node).length + sys.getEdgesTo(node).length < 2) {
+                            console.log("pruning " + node.toString());
+                            sys.pruneNode(node);
+                        }
+                        //console.log(node.toString());
+                    });
                 }
                 else
                 {
@@ -213,13 +220,23 @@ var nodeslist = new Array();
                     
                     $.getJSON('/getConnections?id=' + nextID, function(data) {
                       if (nextID != '23909859')
-                      $.each(data.friends, function() {
-            
-                           sys.addNode(this.toString(), {label: this.toString()})
-                               sys.addEdge(nextID,this.toString())
-                          //nodeslist.push(this.toString())
-                      });
-                            setTimeout("getNext()", 200);
+                      sys.addNode(nextID, {label:data.screen_name});
+                      if (nextID != '23909859')
+                      if (data.response == '0')
+                      {
+                          $.each(data.friends, function() {
+                                  
+                                if (!sys.getNode(this.toString()) )
+                               sys.addNode(this.toString(), {label: this.toString()})
+                                   sys.addEdge(nextID,this.toString())
+                              //nodeslist.push(this.toString())
+                          });
+                      }
+                      else
+                      {
+                          sys.pruneNode(nextID);
+                      }
+                            setTimeout("getNext()", 100);
                             console.log(nodeslist.length + " items: " + nodeslist);
                     });
                 }
